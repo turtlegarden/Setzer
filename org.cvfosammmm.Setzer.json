@@ -1,7 +1,7 @@
 {
     "id": "org.cvfosammmm.Setzer",
     "runtime": "org.gnome.Platform",
-    "runtime-version": "46",
+    "runtime-version": "48",
     "sdk": "org.gnome.Sdk",
     "sdk-extensions": [
         "org.freedesktop.Sdk.Extension.texlive"
@@ -11,7 +11,7 @@
             "directory": "texlive",
             "subdirectories": true,
             "autodelete": true,
-            "version": "22.08"
+            "version": "24.08"
         }
     },
     "command": "setzer",
