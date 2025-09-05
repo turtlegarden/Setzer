@@ -18,7 +18,7 @@
 
 import gi
 gi.require_version('Gtk', '4.0')
-from gi.repository import Gtk
+from gi.repository import Gtk, Adw
 
 from setzer.app.service_locator import ServiceLocator
 
@@ -30,21 +30,20 @@ class AboutDialog(object):
 
     def run(self):
         self.setup()
-        self.view.present()
+        self.view.present(main_window)
 
     def setup(self):
-        self.view = Gtk.AboutDialog()
-        self.view.set_transient_for(self.main_window)
-        self.view.set_modal(True)
-        self.view.set_program_name('Setzer')
+        self.view = Adw.AboutDialog()
+        self.view.set_application_name('Setzer')
         self.view.set_version(ServiceLocator.get_setzer_version())
         self.view.set_copyright('Copyright © 2017-present')
         self.view.set_comments(_('Setzer is a LaTeX editor.'))
         self.view.set_license_type(Gtk.License.GPL_3_0)
         self.view.set_website('https://www.cvfosammmm.org/setzer/')
         self.view.set_website_label('https://www.cvfosammmm.org/setzer/')
-        self.view.set_authors(('Robert Griesel',))
-        self.view.set_logo_icon_name('org.cvfosammmm.Setzer')
+        self.view.set_developers(('Robert Griesel',))
+        self.view.set_issue_url('https://github.com/cvfosammmm/Setzer/issues')
+        self.view.set_application_icon('org.cvfosammmm.Setzer')
         # TRANSLATORS: 'Name <email@domain.com>' or 'Name https://website.example'
         self.view.set_translator_credits(_('translator-credits'))
 
