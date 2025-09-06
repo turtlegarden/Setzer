@@ -30,7 +30,7 @@ class AboutDialog(object):
 
     def run(self):
         self.setup()
-        self.view.present(main_window)
+        self.view.present(self.main_window)
 
     def setup(self):
         self.view = Adw.AboutDialog()
@@ -40,7 +40,7 @@ class AboutDialog(object):
         self.view.set_comments(_('Setzer is a LaTeX editor.'))
         self.view.set_license_type(Gtk.License.GPL_3_0)
         self.view.set_website('https://www.cvfosammmm.org/setzer/')
-        self.view.set_website_label('https://www.cvfosammmm.org/setzer/')
+        self.view.set_website('https://www.cvfosammmm.org/setzer/')
         self.view.set_developers(('Robert Griesel',))
         self.view.set_issue_url('https://github.com/cvfosammmm/Setzer/issues')
         self.view.set_application_icon('org.cvfosammmm.Setzer')

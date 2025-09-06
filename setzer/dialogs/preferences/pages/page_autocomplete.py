@@ -17,7 +17,7 @@
 
 import gi
 gi.require_version('Gtk', '4.0')
-from gi.repository import Gtk
+from gi.repository import Gtk, Adw
 
 
 class PageAutocomplete(object):
@@ -29,65 +29,57 @@ class PageAutocomplete(object):
 
     def init(self):
         self.view.option_autocomplete.set_active(self.settings.get_value('preferences', 'enable_autocomplete'))
-        self.view.option_autocomplete.connect('toggled', self.preferences.on_check_button_toggle, 'enable_autocomplete')
+        self.view.option_autocomplete.connect('notify::active', self.preferences.on_check_button_toggle, 'enable_autocomplete')
 
         self.view.option_bracket_completion.set_active(self.settings.get_value('preferences', 'enable_bracket_completion'))
-        self.view.option_bracket_completion.connect('toggled', self.preferences.on_check_button_toggle, 'enable_bracket_completion')
+        self.view.option_bracket_completion.connect('notify::active', self.preferences.on_check_button_toggle, 'enable_bracket_completion')
 
         self.view.option_selection_brackets.set_active(self.settings.get_value('preferences', 'bracket_selection'))
-        self.view.option_selection_brackets.connect('toggled', self.preferences.on_check_button_toggle, 'bracket_selection')
+        self.view.option_selection_brackets.connect('notify::active', self.preferences.on_check_button_toggle, 'bracket_selection')
 
         self.view.option_tab_jump_brackets.set_active(self.settings.get_value('preferences', 'tab_jump_brackets'))
-        self.view.option_tab_jump_brackets.connect('toggled', self.preferences.on_check_button_toggle, 'tab_jump_brackets')
+        self.view.option_tab_jump_brackets.connect('notify::active', self.preferences.on_check_button_toggle, 'tab_jump_brackets')
 
         self.view.option_update_matching_blocks.set_active(self.settings.get_value('preferences', 'update_matching_blocks'))
-        self.view.option_update_matching_blocks.connect('toggled', self.preferences.on_check_button_toggle, 'update_matching_blocks')
+        self.view.option_update_matching_blocks.connect('notify::active', self.preferences.on_check_button_toggle, 'update_matching_blocks')
 
 
-class PageAutocompleteView(Gtk.Box):
+class PageAutocompleteView(Adw.PreferencesPage):
 
     def __init__(self):
-        Gtk.Box.__init__(self)
-        self.set_orientation(Gtk.Orientation.VERTICAL)
+        Adw.PreferencesPage.__init__(self)
+        super(PageAutocompleteView, self).set_title(_('Autocomplete'))
+        super(PageAutocompleteView, self).set_icon_name('code-symbolic')
 
-        self.set_margin_start(18)
-        self.set_margin_end(18)
-        self.set_margin_top(18)
-        self.set_margin_bottom(18)
-        self.get_style_context().add_class('preferences-page')
+        group = Adw.PreferencesGroup()
+        group.set_title('<b>' + _('LaTeX Commands') + '</b>')
 
-        label = Gtk.Label()
-        label.set_markup('<b>' + _('LaTeX Commands') + '</b>')
-        label.set_xalign(0)
-        label.set_margin_bottom(6)
-        self.append(label)
+        self.option_autocomplete = Adw.SwitchRow()
+        self.option_autocomplete.set_title(_('Suggest matching LaTeX Commands'))
+        group.add(self.option_autocomplete)
 
-        self.option_autocomplete = Gtk.CheckButton.new_with_label(_('Suggest matching LaTeX Commands'))
-        self.append(self.option_autocomplete)
-
-        label = Gtk.Label()
-        label.set_markup('<b>' + _('Others') + '</b>')
-        label.set_xalign(0)
-        label.set_margin_top(18)
-        label.set_margin_bottom(6)
-        self.append(label)
-
-        self.option_bracket_completion = Gtk.CheckButton.new_with_label(_('Automatically add closing brackets'))
-        self.append(self.option_bracket_completion)
-
-        self.option_selection_brackets = Gtk.CheckButton.new_with_label(_('Add brackets to selected text, instead of replacing it with them'))
-        self.append(self.option_selection_brackets)
-
-        label = Gtk.Label()
-        label.set_markup(_('Jump over closing brackets with <tt>Tab</tt>'))
-        self.option_tab_jump_brackets = Gtk.CheckButton()
-        self.option_tab_jump_brackets.set_child(label)
-        self.append(self.option_tab_jump_brackets)
-
-        label = Gtk.Label()
-        label.set_markup(_('Update matching <tt>begin</tt> / <tt>end</tt> blocks'))
-        self.option_update_matching_blocks = Gtk.CheckButton()
-        self.option_update_matching_blocks.set_child(label)
-        self.append(self.option_update_matching_blocks)
+        self.add(group)
 
 
+        group = Adw.PreferencesGroup()
+        group.set_title(_('Others'))
+
+        self.option_bracket_completion = Adw.SwitchRow()
+        self.option_bracket_completion.set_title(_('Automatically add closing brackets'))
+        group.add(self.option_bracket_completion)
+
+        self.option_selection_brackets = Adw.SwitchRow()
+        self.option_selection_brackets.set_title(_('Add brackets to selected text, instead of replacing it with them'))
+        group.add(self.option_selection_brackets)
+
+        self.option_tab_jump_brackets = Adw.SwitchRow()
+        self.option_tab_jump_brackets.set_use_markup(True)
+        self.option_tab_jump_brackets.set_title(_('Jump over closing brackets with <tt>Tab</tt>'))
+        group.add(self.option_tab_jump_brackets)
+
+        self.option_update_matching_blocks = Adw.SwitchRow()
+        self.option_update_matching_blocks.set_use_markup(True)
+        self.option_update_matching_blocks.set_title(_('Update matching <tt>begin</tt> / <tt>end</tt> blocks'))
+        group.add(self.option_update_matching_blocks)
+
+        self.add(group)

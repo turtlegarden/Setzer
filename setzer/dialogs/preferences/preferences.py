@@ -35,7 +35,7 @@ class PreferencesDialog(object):
 
     def run(self):
         self.setup()
-        self.view.present()
+        self.view.present(self.main_window)
 
     def setup(self):
         self.view = view.Preferences(self.main_window)
@@ -45,24 +45,26 @@ class PreferencesDialog(object):
         self.page_font_color = page_font_color.PageFontColor(self, self.settings, self.main_window)
         self.page_autocomplete = page_autocomplete.PageAutocomplete(self, self.settings)
 
-        self.view.notebook.append_page(self.page_build_system.view, Gtk.Label.new(_('Build System')))
-        self.view.notebook.append_page(self.page_editor.view, Gtk.Label.new(_('Editor')))
-        self.view.notebook.append_page(self.page_font_color.view, Gtk.Label.new(_('Font & Colors')))
-        self.view.notebook.append_page(self.page_autocomplete.view, Gtk.Label.new(_('Autocomplete')))
-
         self.page_build_system.init()
         self.page_editor.init()
         self.page_font_color.init()
         self.page_autocomplete.init()
 
-    def on_check_button_toggle(self, button, preference_name):
+        self.view.add(self.page_build_system.view)
+        self.view.add(self.page_editor.view)
+        self.view.add(self.page_font_color.view)
+        self.view.add(self.page_autocomplete.view)
+
+
+
+    def on_check_button_toggle(self, button, x, preference_name):
         self.settings.set_value('preferences', preference_name, button.get_active())
         
-    def on_radio_button_toggle(self, button, preference_name, value):
+    def on_radio_button_toggle(self, button, x, preference_name, value):
         self.settings.set_value('preferences', preference_name, value)
 
     def spin_button_changed(self, button, preference_name):
-        self.settings.set_value('preferences', preference_name, button.get_value_as_int())
+        self.settings.set_value('preferences', preference_name, int(button.get_value()))
 
     def text_deleted(self, buffer, position, n_chars, preference_name):
         self.settings.set_value('preferences', preference_name, buffer.get_text())

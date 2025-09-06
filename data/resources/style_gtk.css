@@ -15,7 +15,7 @@ button.new-document-menu-button {
 scrollbar.hidden slider {
     opacity: 0;
 }
-headerbar > windowhandle > box {
+/*headerbar > windowhandle > box {
     padding-top: 0px;
     padding-bottom: 0px;
 }
@@ -34,7 +34,7 @@ headerbar button {
 headerbar togglebutton {
     margin-top: 0px;
     margin-bottom: 0px;
-}
+}*/
 
 /*
 ** welcome-screen
@@ -481,26 +481,11 @@ box.search_bar entry.search_entry {
 ** preferences
 */
 
-box.preferences-page checkbutton {
-    padding-left: 0px;
-}
-box.preferences-page checkbutton check {
-    margin-left: 1px;
-    margin-right: 6px;
-}
-box.preferences-page checkbutton radio {
-    margin-left: 1px;
-    margin-right: 6px;
-}
-box.preferences-page .description {
-    color: @description_color;
-    font-size: 13px;
-}
-box.preferences-page .preview {
+.preview {
     border-top: 1px solid @borders;
     margin-top: 18px;
 }
-box.preferences-page .preview textview {
+.preview textview {
     padding: 18px;
 }
 box.preferences-page flowboxchild {
@@ -512,12 +497,12 @@ box.preferences-page flowboxchild {
 box.preferences-page flowboxchild:selected {
     border: 1px solid @accent_bg_color;
 }
-box.preferences-page GtkSourceStyleSchemePreview textview {
+GtkSourceStyleSchemePreview textview {
     border-radius: 5px;
     padding: 0px;
     margin: 0px;
 }
-box.preferences-page GtkSourceStyleSchemePreview image {
+GtkSourceStyleSchemePreview image {
     background: @accent_bg_color;
     color: @accent_fg_color;
     border-radius: 10px;
@@ -669,4 +654,9 @@ label.bibtex-wizard-header {
     padding-bottom: 6px;
 }
 
+/* Other */
 
+GtkCenterBox > * {
+    margin-top: 3px;
+    margin-bottom: 3px;
+}

@@ -18,8 +18,8 @@
 import gi
 gi.require_version('Gtk', '4.0')
 gi.require_version('GtkSource', '5')
-from gi.repository import Gtk
-from gi.repository import GLib
+from gi.repository import Gtk, Adw
+from gi.repository import GLib, GObject
 from gi.repository import Pango
 from gi.repository import GtkSource
 
@@ -34,7 +34,7 @@ from setzer.app.font_manager import FontManager
 class PageFontColor(object):
 
     def __init__(self, preferences, settings, main_window):
-        self.view = PageFontColorView()
+        self.view = PageFontColorView(main_window)
         self.preferences = preferences
         self.settings = settings
         self.main_window = main_window
@@ -43,7 +43,7 @@ class PageFontColor(object):
         self.update_switchers()
         self.view.style_switcher.connect('child-activated', self.on_style_switcher_changed)
         self.view.option_recolor_pdf.set_active(self.settings.get_value('preferences', 'recolor_pdf'))
-        self.view.option_recolor_pdf.connect('toggled', self.on_recolor_pdf_option_toggled)
+        self.view.option_recolor_pdf.connect('notify::active', self.on_recolor_pdf_option_toggled)
 
         self.update_font_color_preview()
 
@@ -52,30 +52,22 @@ class PageFontColor(object):
         self.view.source_buffer.set_language(source_language)
         self.update_font_color_preview()
 
-        self.view.font_chooser_button.set_font(self.settings.get_value('preferences', 'font_string'))
-        self.view.font_chooser_button.connect('font-set', self.on_font_set)
+        self.view.font = self.settings.get_value('preferences', 'font_string')
+        self.view.font_label.set_label(self.settings.get_value('preferences', 'font_string'))
         self.view.option_use_system_font.set_active(self.settings.get_value('preferences', 'use_system_font'))
-        self.view.font_chooser_revealer.set_reveal_child(not self.view.option_use_system_font.get_active())
-        self.view.option_use_system_font.connect('toggled', self.on_use_system_font_toggled)
+        self.view.option_use_system_font.connect('notify::active', self.on_use_system_font_toggled)
 
-    def on_use_system_font_toggled(self, button):
-        self.view.font_chooser_revealer.set_reveal_child(not button.get_active())
+        self.view.font_label.connect('notify::label', self.on_font_set)
+
+    def on_use_system_font_toggled(self, button, *args):
         self.settings.set_value('preferences', 'use_system_font', button.get_active())
 
-    def on_recolor_pdf_option_toggled(self, button):
+    def on_recolor_pdf_option_toggled(self, button, *args):
         self.settings.set_value('preferences', 'recolor_pdf', button.get_active())
 
-    def on_font_set(self, button):
-        if button.get_font_size() < 6 * Pango.SCALE:
-            font_desc = button.get_font_desc()
-            font_desc.set_size(6 * Pango.SCALE)
-            button.set_font_desc(font_desc)
-        elif button.get_font_size() > 24 * Pango.SCALE:
-            font_desc = button.get_font_desc()
-            font_desc.set_size(24 * Pango.SCALE)
-            button.set_font_desc(font_desc)
-            
-        self.settings.set_value('preferences', 'font_string', button.get_font())
+    def on_font_set(self, *args):
+        fontdesc = self.view.font
+        self.settings.set_value('preferences', 'font_string', fontdesc)
 
     def on_style_switcher_changed(self, switcher, child_widget):
         style_scheme_preview = child_widget.get_child()
@@ -108,83 +100,29 @@ class PageFontColor(object):
         self.view.source_buffer.set_style_scheme(source_style_scheme_light)
 
 
-class PageFontColorView(Gtk.Box):
+class PageFontColorView(Adw.PreferencesPage):
 
-    def __init__(self):
-        Gtk.Box.__init__(self)
-        self.set_orientation(Gtk.Orientation.VERTICAL)
+    def __init__(self, main_window):
+        Adw.PreferencesPage.__init__(self)
+        super(PageFontColorView, self).set_title(_('Font & Color'))
+        super(PageFontColorView, self).set_icon_name('fill-tool-symbolic')
+        self.main_window = main_window
 
-        self.set_margin_top(18)
-        self.get_style_context().add_class('preferences-page')
+        group = Adw.PreferencesGroup()
 
-        label = Gtk.Label()
-        label.set_markup('<b>' + _('Font') + '</b>')
-        label.set_xalign(0)
-        label.set_margin_start(18)
-        label.set_margin_bottom(6)
-        self.append(label)
-
-        font_string = FontManager.get_system_font()
-        self.option_use_system_font = Gtk.CheckButton.new_with_label(_('Use the system fixed width font (' + font_string + ')'))
-        self.option_use_system_font.set_margin_start(18)
-        self.option_use_system_font.set_margin_bottom(18)
-        self.append(self.option_use_system_font)
-
-        self.font_chooser_revealer = Gtk.Revealer()
-        vbox = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
-        vbox.set_margin_start(18)
-        label = Gtk.Label()
-        label.set_markup(_('Set Editor Font:'))
-        label.set_xalign(0)
-        label.set_margin_bottom(6)
-        vbox.append(label)
-
-        self.font_chooser_button = Gtk.FontButton()
-        self.font_chooser_button.set_margin_bottom(18)
-        hbox = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 0)
-        hbox.append(self.font_chooser_button)
-        vbox.append(hbox)
-        self.font_chooser_revealer.set_child(vbox)
-        self.append(self.font_chooser_revealer)
-
-        label = Gtk.Label()
-        label.set_markup('<b>' + _('Color Scheme') + '</b>')
-        label.set_xalign(0)
-        label.set_margin_start(18)
-        label.set_margin_bottom(7)
-        self.append(label)
-
-        self.style_switcher = StyleSwitcher()
-        self.style_switcher.set_margin_start(18)
-        self.style_switcher.set_margin_bottom(18)
-        self.append(self.style_switcher)
-
-        label = Gtk.Label()
-        label.set_markup('<b>' + _('Options') + '</b>')
-        label.set_xalign(0)
-        label.set_margin_start(18)
-        label.set_margin_bottom(6)
-        self.append(label)
-
-        self.option_recolor_pdf = Gtk.CheckButton.new_with_label(_('Show .pdf in theme colors'))
-        self.option_recolor_pdf.set_margin_start(18)
-        self.option_recolor_pdf.set_margin_bottom(18)
-        self.append(self.option_recolor_pdf)
-
-        self.preview_wrapper = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
-        self.preview_wrapper.get_style_context().add_class('preview')
-        scrolled_window = Gtk.ScrolledWindow()
-        scrolled_window.set_max_content_height(240)
-        scrolled_window.set_propagate_natural_height(True)
         self.source_view = GtkSource.View()
+        self.source_view.get_style_context().add_class('card')
+        self.source_view.get_style_context().add_class('preview-syntax')
         self.source_view.set_editable(False)
         self.source_view.set_cursor_visible(False)
         self.source_view.set_monospace(True)
         self.source_view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
         self.source_view.set_show_line_numbers(False)
         self.source_view.set_highlight_current_line(False)
-        self.source_view.set_left_margin(0)
-        scrolled_window.set_child(self.source_view)
+        self.source_view.set_left_margin(12)
+        self.source_view.set_right_margin(12)
+        self.source_view.set_top_margin(12)
+        self.source_view.set_bottom_margin(12)
         self.source_buffer = self.source_view.get_buffer()
         self.source_buffer.set_highlight_matching_brackets(False)
         self.source_buffer.set_text('''% Syntax highlighting preview
@@ -196,9 +134,94 @@ class PageFontColorView(Gtk.Box):
 This is a \\textit{preview}, for $x, y \\in \\mathbb{R}: x \\leq y$ or $x > y$.
 \\end{document}''')
         self.source_buffer.place_cursor(self.source_buffer.get_start_iter())
-        self.preview_wrapper.append(scrolled_window)
-        self.append(self.preview_wrapper)
+        group.add(self.source_view)
 
+        self.add(group)
+
+        group = Adw.PreferencesGroup()
+        group.set_title(_('Font'))
+
+        system_font = Adw.ExpanderRow()
+        system_font.set_expanded(True)
+        system_font.set_title(_('Use the system fixed width font'))
+
+        self.option_use_system_font = Gtk.Switch()
+        self.option_use_system_font.set_valign(Gtk.Align.CENTER)
+        self.option_use_system_font.connect('notify::active', self.option_system_font_activate)
+        system_font.add_suffix(self.option_use_system_font)
+
+        system_font.connect('activate', self.system_font_activate)
+
+        self.font_chooser_button = Adw.ActionRow()
+        self.font_chooser_button.set_title(_('Editor font'))
+        self.font_chooser_button.set_activatable(True)
+
+        self.font = 'Monospace 10'
+        self.connect('notify::font', self.on_font_update)
+
+        self.font_label = Gtk.Label()
+        self.font_label.set_label('Monospace 10')
+        self.font_chooser_button.add_suffix(self.font_label)
+
+        self.font_chooser_button.connect('activated', self.font_activate)
+        system_font.add_row(self.font_chooser_button)
+
+        self.system_font_row = system_font
+        group.add(system_font)
+
+        self.add(group)
+
+
+        group = Adw.PreferencesGroup()
+        group.set_title(_('Color Scheme'))
+
+        self.style_switcher = StyleSwitcher()
+        self.style_switcher.set_margin_start(18)
+        self.style_switcher.set_margin_bottom(18)
+        group.add(self.style_switcher)
+
+        self.add(group)
+
+        group = Adw.PreferencesGroup()
+        group.set_title(_('Options'))
+
+        self.option_recolor_pdf = Adw.SwitchRow()
+        self.option_recolor_pdf.set_title(_('Show .pdf in theme colors'))
+        group.add(self.option_recolor_pdf)
+
+        self.add(group)
+
+        self.option_system_font_activate()
+
+    def system_font_activate(self, x, y):
+        self.option_use_system_font.set_active(not self.option_use_system_font.get_active())
+
+    def option_system_font_activate(self, *args):
+        active = not self.option_use_system_font.get_active()
+        self.system_font_row.set_enable_expansion(active)
+
+    def font_activate(self, *args):
+        self.font_dialog = Gtk.FontDialog()
+        self.font_dialog.set_title(_('Choose a Font'))
+        self.font_dialog.set_modal(True)
+
+        fontdesc = Pango.FontDescription.from_string(self.font)
+
+        self.font_dialog.choose_font(self.main_window, fontdesc, None, self.on_font_select_finish)
+
+    def on_font_select_finish(self, source, res):
+        fontdesc = self.font_dialog.choose_font_finish(res)
+
+        if fontdesc.get_size() < 6 * Pango.SCALE:
+            fontdesc.set_size(6 * Pango.SCALE)
+        elif fontdesc.get_size() > 24 * Pango.SCALE:
+            fontdesc.set_size(24 * Pango.SCALE)
+
+        self.font = fontdesc.to_string()
+        self.on_font_update()
+
+    def on_font_update(self):
+        self.font_label.set_label(self.font)
 
 class StyleSwitcher(Gtk.FlowBox):
 
@@ -215,9 +238,11 @@ class StyleSwitcher(Gtk.FlowBox):
 
         self.connect('selected-children-changed', self.on_child_activated)
 
+
     def add_style(self, name):
         style_manager = ServiceLocator.get_source_style_scheme_manager()
         widget = GtkSource.StyleSchemePreview.new(style_manager.get_scheme(name))
+        widget.get_style_context().add_class('card')
         self.append(widget)
         self.positions[name] = self.current_max
         self.current_max += 1
@@ -233,5 +258,3 @@ class StyleSwitcher(Gtk.FlowBox):
         name = child_widget.get_child().get_scheme().get_name()
         child_widget.get_child().set_selected(True)
         self.current_index = self.positions[name]
-
-
